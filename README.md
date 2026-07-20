@@ -17,7 +17,7 @@
 ## Установка
 
 ```bash
-cd /Users/akzosec/ProxyAks
+git clone 
 # Прокси работает без npm install (нет зависимостей)
 
 # Опционально: сгенерировать TLS-сертификат
