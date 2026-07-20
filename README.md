@@ -17,7 +17,7 @@
 ## Установка
 
 ```bash
-git clone 
+git clone https://github.com/BEP-11/ProxyAks
 # Прокси работает без npm install (нет зависимостей)
 
 # Опционально: сгенерировать TLS-сертификат
