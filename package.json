@@ -1,0 +1,13 @@
+{
+  "name": "proxy-aks",
+  "version": "1.0.0",
+  "description": "HTTP/HTTPS proxy with block bypass, data protection and fast activation",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "generate-cert": "node src/cert-manager.js"
+  },
+  "keywords": ["proxy", "https", "bypass"],
+  "license": "MIT",
+  "dependencies": {}
+}

@@ -1,0 +1,19 @@
+{
+  "host": "0.0.0.0",
+  "port": 8080,
+  "tlsPort": 8443,
+  "enableTls": true,
+  "bypass": {
+    "rotateUserAgent": true,
+    "randomizeHeaders": true,
+    "addBrowserHeaders": true,
+    "removeIdentifyingHeaders": true
+  },
+  "whitelist": [],
+  "blacklist": [],
+  "logging": {
+    "enabled": true,
+    "logRequests": true,
+    "logTimestamps": true
+  }
+}
