@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ProxyAks</title>
+<style>
+  /* ── Reset + theme ──────────────────────────── */
+  :root {
+    --bg:   #0f1729;
+    --card: #1a2340;
+    --border:#283655;
+    --accent:#6366f1;
+    --accent2:#818cf8;
+    --text:  #e2e8f0;
+    --muted: #94a3b8;
+    --green: #22c55e;
+    --red:   #ef4444;
+    --orange:#f59e0b;
+    --font:  'Segoe UI', Inter, system-ui, sans-serif;
+    --mono:  'Fira Code', Consolas, monospace;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+  /* ── Layout ─────────────────────── */ 
+</style>
+<script type="module">
+// ── Inline module for quick dev (no bundler) ── */
+
+const api = window.proxyAPI; // from preload.js
+
+/* ═══════ State ═══════ */
+let statsInterval, logInterval;
+
+/* ═════== DOM refs ═══════ */
+const $ = q => document.querySelector(q);
+const statusText   = $('#status-text');
+const startBtn     = $('#start-btn');
+const stopBtn      = $('#stop-btn');
+const statReqs     = $('#stat-requests');
+const statIn       = $('#stat-bytes-in');
+const statOut      = $('#stat-bytes-out');
+const statConns    = $('#stat-connections');
+const statErrors   = $('#stat-errors');
+const logArea      = $('#log-area');
+const cfgForm      = $('#cfg-form');
+const portInput    = $('#port-input');
+const tlsPortInput = $('#tls-port-input');
+const enableTls    = $('#enable-tls');
+const toggleBtns   = document.querySelectorAll('.toggle-btn');
+
+/* ══════ Helpers ═ */
+function fmtBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(2) + ' MB';
+}
+function fmtUptime(s) {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return `${h}:${String(m).padStart(2,'0')}`;
+}
+function setStatus(running) {
+  statusText.textContent = running ? '🟢 РАБОТАЕТ' : '⚫ ОСТАНОВЛЕН';
+  statusText.style.color = running ? 'var(--green)' : 'var(--red)';
+  startBtn.disabled = running;
+  stopBtn.disabled = !running;
+}
+
+/* ══════ Stats & Logs polling ═===== */
+async function pollStats() {
+  try {
+    const s = await api.stats();
+    statReqs.textContent   = (s.requests || 0).toLocaleString();
+    statIn.textContent     = fmtBytes(s.bytesInRaw || 0);
+    statOut.textContent    = fmtBytes(s.bytesOutRaw || 0);
+    statConns.textContent  = s.connections || 0;
+    statErrors.textContent = s.errors || 0;
+    setStatus(s.running);
+  } catch {} // ignore when proxy module not loaded
+}
+async function pollLogs() {
+  try {
+    const logs = await api.logs();
+    if (!Array.isArray(logs)) return;
+    logArea.innerHTML = logs.map(l => {
+      const t = new Date(l.time).toLocaleTimeString();
+      return `<div class="log-line"><span class="log-time">${t}</span> ${escHtml(l.msg)}</div>`;
+    }).join('');
+    logArea.scrollTop = logArea.scrollHeight;
+  } catch {}
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ══ Start / Stop ══ */
+startBtn.addEventListener('click', async () => {
+  await api.start();
+  startPolling();
+});
+stopBtn.addEventListener('click', async () => {
+  await api.stop();
+  stopPolling();
+});
+
+function startPolling() {
+  if (statsInterval || logInterval) return;
+  statsInterval = setInterval(pollStats, 1500);
+  logInterval   = setInterval(pollLogs, 2000);
+  pollStats(); pollLogs();
+}
+function stopPolling() {
+  clearInterval(statsInterval); statsInterval = null;
+  clearInterval(logInterval);   logInterval   = null;
+  pollStats(); // update UI once
+}
+
+/* ════════ Config ═════ */
+async function loadConfig() {
+  const cfg = await api.config();
+  portInput.value    = cfg.port || 8080;
+  tlsPortInput.value = cfg.tlsPort || 8443;
+  enableTls.checked  = !!cfg.enableTls;
+  toggleBtns.forEach(btn => {
+    const key = btn.dataset.key;
+    if (cfg.bypass[key] !== undefined) btn.checked = cfg.bypass[key];
+  });
+}
+
+async function saveConfig() {
+  const current  = await api.config(); // get to preserve structure
+  const updated = Object.assign({}, current);
+  const bypassCfg  = Object.assign({}, updated.bypass);
+  toggleBtns.forEach(btn => { if (btn.dataset.key) bypassCfg[btn.dataset.key] = btn.checked; });
+  updated.port      = parseInt(portInput.value, 10);
+  updated.tlsPort   = parseInt(tlsPortInput.value, 10);
+  updated.enableTls = enableTls.checked;
+  Object.assign(updated.bypass, bypassCfg);
+  await api.updateCfg(updated);
+}
+
+saveBtn.addEventListener('click', saveConfig);
+
+/* ════ Load state on init == */
+api.onStatus(r => setStatus(r)); // listen for live status events
+pollStats(); pollLogs(); loadConfig();
+</script>
+</body>
+</html>
