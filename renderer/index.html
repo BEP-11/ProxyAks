@@ -26,7 +26,7 @@
   /* ── Layout ─────────────────────── */ 
 </style>
 <script type="module">
-// ── Inline module for quick dev (no bundler) ── */
+// ── Inline module for quick dev (no bundler) ──
 
 const api = window.proxyAPI; // from preload.js
 
@@ -49,6 +49,7 @@ const portInput    = $('#port-input');
 const tlsPortInput = $('#tls-port-input');
 const enableTls    = $('#enable-tls');
 const toggleBtns   = document.querySelectorAll('.toggle-btn');
+const saveBtn      = $('#save-config-btn');
 
 /* ══════ Helpers ═ */
 function fmtBytes(b) {
