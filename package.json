@@ -2,12 +2,15 @@
   "name": "proxy-aks",
   "version": "1.0.0",
   "description": "HTTP/HTTPS proxy with block bypass, data protection and fast activation",
-  "main": "src/server.js",
+  "main": "electron/main.js",
   "scripts": {
     "start": "node src/server.js",
-    "generate-cert": "node src/cert-manager.js"
+    "generate-cert": "node src/cert-manager.js",
+    "app": "electron ."
   },
   "keywords": ["proxy", "https", "bypass"],
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {
+    "electron": "^38.0.0"
+  }
 }
